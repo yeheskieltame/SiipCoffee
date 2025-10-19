@@ -27,7 +27,20 @@ interface Message {
     }>;
   };
   total?: number;
+  receipt?: {
+    order_id: string;
+    items: string[];
+    total_price: number;
+    payment_method: string;
+    timestamp: string;
+    message: string;
+  };
 }
+
+// Detect if message contains receipt-like content
+const isReceiptMessage = (text: string) => {
+  return text.includes('ORDER RECEIPT') || text.includes('Order Number') || text.includes('Total:');
+};
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -273,6 +286,43 @@ export default function ChatInterface() {
                       <span className="text-sm font-medium">Total:</span>
                       <span className="font-bold">{formatPrice(message.total)}</span>
                     </div>
+                  </div>
+                )}
+
+                {/* Show receipt if available or detected in message */}
+                {(message.receipt || (message.sender === "bot" && isReceiptMessage(message.text))) && (
+                  <div className="mt-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                    <div className="text-center mb-3">
+                      <h4 className="text-lg font-bold text-green-800">📋 Order Receipt</h4>
+                      {message.receipt && (
+                        <p className="text-xs text-green-600">Order #{message.receipt.order_id}</p>
+                      )}
+                    </div>
+
+                    <div className="text-sm text-gray-700 whitespace-pre-line">
+                      {message.text}
+                    </div>
+
+                    {message.receipt && (
+                      <>
+                        <div className="border-t border-green-200 pt-3 mt-3">
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>Payment:</span>
+                            <span>{message.receipt.payment_method}</span>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>Time:</span>
+                            <span>{message.receipt.timestamp}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 p-2 bg-green-100 rounded-lg text-center">
+                          <p className="text-xs font-medium text-green-800">
+                            ✅ Order completed successfully!
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

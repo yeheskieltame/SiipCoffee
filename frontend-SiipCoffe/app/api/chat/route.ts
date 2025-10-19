@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
 // Call the actual backend NLP service
-async function callNLPBackend(message: string) {
+async function callNLPBackend(message: string, userId: string) {
   console.log(`Sending message to backend: ${BACKEND_URL}/api/chat`);
 
   const response = await fetch(`${BACKEND_URL}/api/chat`, {
@@ -12,7 +12,10 @@ async function callNLPBackend(message: string) {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      message,
+      user_id: userId
+    }),
   });
 
   if (!response.ok) {
@@ -36,8 +39,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Call the NLP backend
-    const nlpResponse = await callNLPBackend(message);
+    // Use persistent user ID for context management
+    const userId = 'web_user_session'; // In production, use proper auth/user ID
+
+    // Call the NLP backend with persistent user ID
+    const nlpResponse = await callNLPBackend(message, userId);
 
     return NextResponse.json(nlpResponse);
 
