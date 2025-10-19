@@ -168,6 +168,128 @@ def extract_quantity(text):
 
     return None
 
+def process_message(message: str) -> dict:
+    """Main function to process user messages and return appropriate responses"""
+    try:
+        if not message or not message.strip():
+            return {
+                "response": "Hello! I'm your AI Barista. How can I help you today? You can ask me about our menu or get recommendations!",
+                "intent": "greeting",
+                "suggested_items": []
+            }
+
+        # Preprocess the message
+        processed_text = preprocess_text(message)
+
+        # Recognize intent
+        intent_result = recognize_intent(processed_text)
+        intent = intent_result[0] if intent_result and len(intent_result) > 0 else None
+
+        # Handle different intents
+        if intent == "greeting":
+            return {
+                "response": "☕ Hello! Welcome to SiipCoffe! I'm your AI Barista. What can I help you with today? You can ask me about our menu, get recommendations, or place an order!",
+                "intent": "greeting",
+                "suggested_items": []
+            }
+
+        elif intent == "thank_you":
+            return {
+                "response": "You're welcome! 😊 Is there anything else I can help you with? More coffee perhaps?",
+                "intent": "thank_you",
+                "suggested_items": []
+            }
+
+        elif intent == "view_menu":
+            menu = get_menu()
+            sample_items = []
+            # Get sample items from each category
+            for category, items in menu.items():
+                if isinstance(items, list) and items:
+                    sample_items.extend(items[:2])  # Take first 2 items from each category
+                    if len(sample_items) >= 6:  # Limit to 6 items
+                        break
+
+            return {
+                "response": "Here's our menu! 📋 I've organized it by categories for you. You can tap on any item to add it to your cart, or just tell me what you're in the mood for!",
+                "intent": "view_menu",
+                "suggested_items": sample_items
+            }
+
+        elif intent == "ask_price":
+            menu = get_menu()
+            # Get some popular items with prices
+            popular_items = []
+            for category, items in menu.items():
+                if isinstance(items, list) and items:
+                    popular_items.extend(items[:1])
+                    if len(popular_items) >= 4:
+                        break
+
+            return {
+                "response": "Our prices range from IDR 12,000 to IDR 26,000. Here are some popular options with their prices:",
+                "intent": "ask_price",
+                "suggested_items": popular_items
+            }
+
+        elif intent == "order_info":
+            return {
+                "response": "To place an order, you can simply tell me what you'd like! For example: 'I'd like an iced coffee' or 'Show me your pastries'. I'll help you find the perfect item! 🛒",
+                "intent": "order_info",
+                "suggested_items": []
+            }
+
+        # Handle category-specific requests
+        message_lower = message.lower()
+        menu = get_menu()
+
+        # Check for specific categories
+        category_keywords = {
+            "iced_coffee": ["iced coffee", "cold coffee", "ice coffee", "cold brew"],
+            "espresso_based": ["espresso", "latte", "cappuccino", "americano", "hot coffee"],
+            "non_coffee": ["chocolate", "matcha", "tea", "non coffee"],
+            "pastry": ["pastry", "croissant", "food", "snack", "cake"],
+            "refreshment": ["refreshment", "sparkling", "soda", "cold drink"]
+        }
+
+        for category, keywords in category_keywords.items():
+            if any(keyword in message_lower for keyword in keywords):
+                items = menu.get(category, [])
+                if items:
+                    return {
+                        "response": f"Great choice! Here are our {category.replace('_', ' ')} options. Which one catches your eye? 😊",
+                        "intent": "category_recommendation",
+                        "suggested_items": items[:6]  # Show up to 6 items
+                    }
+
+        # Handle specific item requests
+        item_name = extract_entities_item_name(message)
+        if item_name:
+            for category, items in menu.items():
+                if isinstance(items, list):
+                    for item in items:
+                        if item_name.lower() in item.get('name', '').lower():
+                            return {
+                                "response": f"Excellent choice! {item.get('name', '')} is {item.get('description', '')}. Would you like to add it to your order? 💫",
+                                "intent": "item_recommendation",
+                                "suggested_items": [item]
+                            }
+
+        # Default response
+        return {
+            "response": "I'd be happy to help you! 😊 You can ask me about:\n\n• 'Show me the menu'\n• 'I want iced coffee'\n• 'What's popular?'\n• 'Tell me about pastries'\n• 'How much is an espresso?'\n\nOr just tell me what you're in the mood for and I'll make some recommendations! ☕",
+            "intent": "general",
+            "suggested_items": []
+        }
+
+    except Exception as e:
+        print(f"Error processing message: {e}")
+        return {
+            "response": "I'm having trouble processing your request right now. Please try again or ask me about our menu! ☕",
+            "intent": "error",
+            "suggested_items": []
+        }
+
 if __name__ == '__main__':
     print("--- NLP Utils Testing ---")
     # ... (testing block can be uncommented if you want to run this file independently) ...

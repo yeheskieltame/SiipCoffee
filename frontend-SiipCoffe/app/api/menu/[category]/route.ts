@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000';
 
-// GET /api/menu - Fetch menu from backend
-export async function GET(request: NextRequest) {
+// GET /api/menu/[category] - Fetch specific category from backend
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { category: string } }
+) {
   try {
-    const response = await fetch(`${BACKEND_URL}/api/menu`, {
+    const { category } = params;
+
+    const response = await fetch(`${BACKEND_URL}/api/menu/${category}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -28,12 +33,12 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Menu API Error:', error);
+    console.error('Menu Category API Error:', error);
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to connect to menu service',
-        message: 'Unable to load menu data at this time'
+        message: `Unable to load ${category} category at this time`
       },
       {
         status: 500,

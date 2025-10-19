@@ -10,6 +10,7 @@ interface Message {
   sender: "user" | "bot";
   timestamp: Date;
   suggestedItems?: any[];
+  menuData?: any;
 }
 
 interface ChatState {
@@ -93,6 +94,7 @@ export default function ChatPage() {
         sender: "bot",
         timestamp: new Date(),
         suggestedItems: data.suggestedItems || [],
+        menuData: data.menuData || null,
       };
 
       setChatState(prev => ({
@@ -265,7 +267,7 @@ export default function ChatPage() {
 
         {/* Quick Actions */}
         <div className="flex gap-2 mt-3 overflow-x-auto">
-          {['Show menu', 'Recommendations', 'Popular items', 'Iced coffee'].map((suggestion) => (
+          {['menu', 'iced coffee', 'espresso', 'chocolate', 'pastry'].map((suggestion) => (
             <button
               key={suggestion}
               onClick={() => setInputMessage(suggestion)}
