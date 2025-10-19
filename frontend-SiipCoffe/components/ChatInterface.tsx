@@ -2,36 +2,38 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Coffee, Bot, User, ShoppingCart } from "lucide-react";
-import { MenuItem } from "@/types/coffee";
+import { Send, Bot, User } from "lucide-react";
 
 interface Message {
   id: string;
   text: string;
   sender: "user" | "bot";
   timestamp: Date;
-  items?: MenuItem[];
+  items?: Array<{
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+  }>;
+  menuData?: {
+    [category: string]: Array<{
+      id: string;
+      name: string;
+      price: number;
+      description: string;
+    }>;
+  };
   total?: number;
 }
 
-interface ChatInterfaceProps {
-  onAddToCart: (item: MenuItem, quantity: number) => void;
-}
-
-export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: "Hello! I'm your AI barista ☕. I can help you order coffee, answer questions about our menu, or assist with anything else. What would you like today?",
-      sender: "bot",
-      timestamp: new Date(),
-    },
-  ]);
+export default function ChatInterface() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -41,6 +43,43 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Initialize chat with greeting from backend
+  useEffect(() => {
+    if (!isInitialized) {
+      initializeChat();
+    }
+  }, [isInitialized]);
+
+  const initializeChat = async () => {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: "hello" }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const greetingMessage: Message = {
+          id: Date.now().toString(),
+          text: data.response,
+          sender: "bot",
+          timestamp: new Date(),
+          items: data.suggested_items || [],
+          menuData: data.menu_data || undefined,
+        };
+        setMessages([greetingMessage]);
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error("Error initializing chat:", error);
+      // Show connection error without fallback message
+      setIsInitialized(true);
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -85,42 +124,29 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
         text: data.response,
         sender: "bot",
         timestamp: new Date(),
-        items: data.suggestedItems || [],
+        items: data.suggested_items || [],
+        menuData: data.menu_data || undefined,
         total: data.total,
       };
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
-
-      // Fallback response
-      const fallbackMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I'm sorry, I'm having trouble connecting right now. You can try again or browse our menu directly. Would you like me to show you our popular items?",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, fallbackMessage]);
+      // Don't show fallback messages - let user try again
+      // The error will be visible in console for debugging
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
 
-  const quickActions = [
-    { text: "Show me the menu", icon: Coffee },
-    { text: "What's popular today?", icon: Coffee },
-    { text: "I want an iced coffee", icon: Coffee },
-    { text: "Tell me about pastries", icon: Coffee },
-  ];
-
+  
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50">
       {/* Header */}
@@ -173,32 +199,69 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
                 {/* Show suggested items if any */}
                 {message.items && message.items.length > 0 && (
                   <div className="mt-3 space-y-2">
+                    <p className="text-xs text-amber-600 mb-2">💡 You can order any of these by telling me what you&apos;d like:</p>
                     {message.items.map((item) => (
                       <Card
                         key={item.id}
-                        className="bg-amber-50 border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors"
-                        onClick={() => onAddToCart(item, 1)}
+                        className="bg-amber-50 border-amber-200 hover:bg-amber-100 transition-colors"
                       >
                         <CardContent className="p-3">
                           <div className="flex justify-between items-center">
-                            <div>
-                              <h4 className="font-medium text-sm">{item.name}</h4>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm text-amber-900">{item.name}</h4>
                               <p className="text-xs text-gray-600 mt-1">{item.description}</p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right ml-3">
                               <p className="font-semibold text-amber-700">{formatPrice(item.price)}</p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="mt-1 text-xs bg-white hover:bg-amber-50 border-amber-300"
-                              >
-                                <ShoppingCart className="w-3 h-3 mr-1" />
-                                Add
-                              </Button>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
+                    ))}
+                  </div>
+                )}
+
+                {/* Show full menu data if available */}
+                {message.menuData && (
+                  <div className="mt-4 space-y-4">
+                    <p className="text-xs font-semibold text-amber-700 mb-3">📋 Complete Menu:</p>
+                    {Object.entries(message.menuData).map(([category, items]) => (
+                      category !== 'order_info' && category !== 'food' && items.length > 0 && (
+                        <div key={category} className="space-y-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-amber-900 capitalize">
+                              {category.replace('_', ' ')}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {items.length} items
+                            </Badge>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                            {items.map((item) => (
+                              <Card
+                                key={item.id}
+                                className="bg-white border border-amber-100 hover:bg-amber-50 transition-colors cursor-pointer"
+                              >
+                                <CardContent className="p-2">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex-1 min-w-0">
+                                      <h5 className="text-xs font-medium text-gray-800 truncate">
+                                        {item.name}
+                                      </h5>
+                                      <p className="text-xs text-gray-500 truncate">
+                                        {item.description}
+                                      </p>
+                                    </div>
+                                    <span className="text-xs font-bold text-amber-700 ml-2 whitespace-nowrap">
+                                      {formatPrice(item.price)}
+                                    </span>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                      )
                     ))}
                   </div>
                 )}
@@ -251,29 +314,7 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Actions */}
-      {messages.length === 1 && (
-        <div className="px-4 py-2 bg-white/60 backdrop-blur-sm">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-sm text-amber-700 mb-2">Quick actions:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setInput(action.text)}
-                  className="text-xs bg-white border-amber-200 hover:bg-amber-50"
-                >
-                  <action.icon className="w-3 h-3 mr-1" />
-                  {action.text}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
+  
       {/* Input */}
       <div className="bg-white/80 backdrop-blur-sm border-t border-amber-100 p-4">
         <div className="max-w-4xl mx-auto">
@@ -281,7 +322,7 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder="Type your message..."
               className="flex-1 border-amber-200 focus:border-amber-400 focus:ring-amber-200"
               disabled={isLoading}
@@ -294,10 +335,7 @@ export default function ChatInterface({ onAddToCart }: ChatInterfaceProps) {
               <Send className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-amber-600 mt-2 text-center">
-            Powered by AI • Try asking for recommendations or describing what you'd like
-          </p>
-        </div>
+                  </div>
       </div>
     </div>
   );

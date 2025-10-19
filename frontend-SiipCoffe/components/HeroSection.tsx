@@ -12,21 +12,21 @@ export default function HeroSection() {
   const onboardingSteps = [
     {
       title: "Welcome to SiipCoffe ☕",
-      description: "Your premium coffee experience powered by Web3 technology",
+      description: "Your coffee experience powered by AI technology",
       icon: Coffee,
       badge: "Get Started",
     },
     {
       title: "Chat with Our AI Barista 🤖",
-      description: "Order naturally through conversation or browse our menu manually",
+      description: "Order naturally through conversation - just tell us what you'd like!",
       icon: MessageCircle,
       badge: "AI Powered",
     },
     {
       title: "Pay with Crypto 💳",
-      description: "Seamless blockchain payments with your connected wallet",
+      description: "Connect your wallet for easy payments",
       icon: Wallet,
-      badge: "Web3 Ready",
+      badge: "Crypto Ready",
     },
   ];
 
@@ -40,7 +40,7 @@ export default function HeroSection() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onboardingSteps.length]);
 
   const currentOnboarding = onboardingSteps[currentStep];
   const IconComponent = currentOnboarding.icon;
@@ -57,7 +57,7 @@ export default function HeroSection() {
             SiipCoffe
           </h1>
           <p className="text-xl text-muted-foreground max-w-md mx-auto">
-            Premium coffee ordering experience with AI-powered chat and Web3 payments
+            Coffee ordering experience with AI-powered chat and crypto payments
           </p>
         </div>
 
@@ -106,30 +106,20 @@ export default function HeroSection() {
           </CardContent>
         </Card>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        {/* CTA Button */}
+        <div className="flex justify-center">
           <Button
             size="lg"
-            className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+            className="bg-gradient-to-r from-amber-600 to-amber-800 hover:from-amber-700 hover:to-amber-900 text-white shadow-lg transform hover:scale-105 transition-all duration-200 px-8"
             onClick={() => {
-              // This will navigate to the menu page
-              window.location.href = '/menu';
-            }}
-          >
-            Browse Menu
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-amber-200 hover:bg-amber-50 text-amber-700 hover:text-amber-800 transform hover:scale-105 transition-all duration-200"
-            onClick={() => {
-              // This will navigate to the chat page
-              window.location.href = '/chat';
+              // Navigate to chat - this will be handled by parent component
+              const event = new CustomEvent('navigateToChat');
+              window.dispatchEvent(event);
             }}
           >
             <MessageCircle className="mr-2 h-5 w-5" />
-            Start Chatting
+            Start Ordering with AI
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
 
@@ -139,8 +129,8 @@ export default function HeroSection() {
             <div className="flex justify-center mb-4">
               <Coffee className="h-8 w-8 text-amber-600" />
             </div>
-            <h3 className="font-semibold mb-2">Premium Quality</h3>
-            <p className="text-sm text-muted-foreground">Carefully selected beans and expert preparation</p>
+            <h3 className="font-semibold mb-2">Quality Coffee</h3>
+            <p className="text-sm text-muted-foreground">Selected beans and expert preparation</p>
           </Card>
 
           <Card className="text-center p-6 border-0 shadow-sm bg-white/60 backdrop-blur-sm">
@@ -148,7 +138,7 @@ export default function HeroSection() {
               <MessageCircle className="h-8 w-8 text-amber-600" />
             </div>
             <h3 className="font-semibold mb-2">AI Assistant</h3>
-            <p className="text-sm text-muted-foreground">Natural ordering through intelligent conversation</p>
+            <p className="text-sm text-muted-foreground">Order through natural conversation</p>
           </Card>
 
           <Card className="text-center p-6 border-0 shadow-sm bg-white/60 backdrop-blur-sm">
@@ -156,7 +146,7 @@ export default function HeroSection() {
               <Wallet className="h-8 w-8 text-amber-600" />
             </div>
             <h3 className="font-semibold mb-2">Crypto Payments</h3>
-            <p className="text-sm text-muted-foreground">Secure and transparent blockchain transactions</p>
+            <p className="text-sm text-muted-foreground">Secure crypto transactions</p>
           </Card>
         </div>
       </div>

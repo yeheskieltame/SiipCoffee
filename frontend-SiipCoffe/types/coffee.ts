@@ -1,3 +1,6 @@
+// Chat interface now handles all ordering through the backend
+// These types are kept for compatibility with backend responses
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -6,19 +9,8 @@ export interface MenuItem {
   category?: string;
 }
 
-export interface CartItem extends MenuItem {
-  quantity: number;
-}
-
-export interface MenuCategory {
-  id: string;
-  name: string;
-  items: MenuItem[];
-}
-
 export interface Order {
   id: string;
-  items: CartItem[];
   totalPrice: number;
   status: 'pending' | 'preparing' | 'ready' | 'completed';
   createdAt: Date;
